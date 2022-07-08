@@ -1,0 +1,26 @@
+# Java specific
+/pom.xml
+/pom.xml.asc
+*.jar
+*.class
+
+# Clojure tooling
+/.cpcache
+/.clj-kondo/.cache
+/.lein-deps-sum
+/.lein-repl-history
+/.lein-plugins/
+/.lein-failures
+/.nrepl-port
+/.nrepl-history
+
+# Build folders
+/target/
+/target_scala/
+
+# Editor specific folders
+/.lsp/
+/.calva/
+/.idea/
+/.vscode/
+/.metals/
