@@ -10,59 +10,77 @@
   [s]
   (str (subs s 0 100) "...<truncated>"))
 
-(defn make-request-raw!
-  ([url params]
-   (make-request-raw! url params 3))
-  ([url params remaining-retries]
-   (if-not (pos? remaining-retries)
-     (log/error! "Number of retries exhausted, skipping request"
-                 {:request
-                  {:url url
-                   :params params}})
-     (try+
-      (client/get url params)
-      (catch [:status 401] {:keys [status headers body request-time]}
-        (do
-          (log/error! "Request returned 401 status code, refreshing access token ..."
-                      {:request
-                       {:url    url
-                        :params params}
-                       :response
-                       {:status       status,
-                        :headers      headers,
-                        :request-time request-time
-                        :body         (truncate body)}})
-          (auth/refresh-access-token!)
-          (log/info! "Retrying request ..."
-                     {:request
-                      {:url url
-                       :params params}})
-          (make-request-raw! url (auth/update-access-token params) (dec remaining-retries))))
-      (catch #(not= 200 (:status %)) {:keys [status headers body request-time]}
-        (log/error! "Request returned non-200 status code"
+(defmacro with-retries
+  "Try evaluationg an expression, and retry if the result failed.
+  Returns nil if none of the attempts succeeded.
+  "
+  [failed? num-tries expr]
+  (let [wait-times (->> (range 0 (dec num-tries))
+                        (map #(Math/pow 2 %))
+                        (map (partial * 1000)))
+        retries (for [t wait-times]
+                  `(do
+                     (log/info! ~(str "Expression failed, retrying after " (Math/round (/ t 1000)) " seconds"))
+                     (Thread/sleep ~t)
+                     ~expr))]
+    `(some (complement ~failed?)
+           [~expr
+            ~@retries
+            (log/error! "Maximum number of retries reached, returning nil")])))
+
+(defn log-non-200-error
+  [{:keys [url params] :as _request}
+   {:keys [status headers body request-time] :as _response}]
+  (log/error! "Request returned non-200 status code"
+              {:request
+               {:url    url
+                :params params}
+               :reponse
+               {:status       status
+                :headers      headers
+                :request-time request-time
+                :body         (truncate body)}}))
+
+(defn refresh-access-token+log-401-error
+  [{:keys [url params] :as _request}
+   {:keys [status headers body request-time] :as _response}]
+  (do
+    (log/error! "Request returned 401 status code, refreshing access token ..."
+                {:request
+                 {:url    url
+                  :params params}
+                 :response
+                 {:status       status,
+                  :headers      headers,
+                  :request-time request-time
+                  :body         (truncate body)}})
+    (auth/refresh-access-token!)))
+
+(defn get-with-handlers!
+  [url params {:keys [default] :as handlers}]
+  (let [{:keys [status] :as response} (client/get url params)
+        request {:url url
+                 :params params}
+        handler (get handlers status default)]
+    (handler request response)))
+
+(defn get-with-retries!
+  [url params]
+  (let [{:keys [body]}
+        (with-retries #(not= 200 (:status %)) 3
+          (get-with-handlers!
+           url params {200 identity
+                       401 refresh-access-token+log-401-error
+                       :default log-non-200-error}))]
+    (try
+      (util/parse-json body)
+      (catch Exception e
+        (log/error! "Response could not be parsed as JSON"
                     {:request
                      {:url    url
                       :params params}
-                     :reponse
-                     {:status       status
-                      :headers      headers
-                      :request-time request-time
-                      :body         (truncate body)}}))))))
-
-(defn make-request!
-  [url params]
-  (-> (make-request-raw! url params)
-      (:body)
-      (as-> body
-            (try
-              (util/parse-json body)
-              (catch Exception e
-                (log/error! "Response could not be parsed JSON"
-                            {:request
-                             {:url    url
-                              :params params}
-                             :response
-                             {:body body}}))))))
+                     :response
+                     {:body body}})))))
 
 (defn get-articles!
   []
@@ -72,8 +90,7 @@
                      :accept :json}
                     auth/with-user-agent
                     auth/with-access-token)]
-    (make-request! url params)))
-
+    (get-with-retries! url params)))
 
 (defn extract-article-fields
   [{:keys [data] :as _article}]
@@ -94,8 +111,6 @@
        (:data)
        (:children)
        (map extract-article-fields)))
-
-(get-simplified-articles!)
 
 
 (comment
