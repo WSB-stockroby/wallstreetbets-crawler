@@ -52,5 +52,6 @@
 (comment
   (get-access-token!)
   (reset! access-token "asd")
+  @access-token
 
   "asd")
