@@ -2,5 +2,7 @@ FROM adoptopenjdk/openjdk11:latest@sha256:8681e7de7d81b5a1f55ebb6832178b9d028577
 
 WORKDIR usr/local/wallstreetbets-crawler
 COPY secret.edn secret.edn
+COPY wallstreetbets-crawler.jar wallstreetbets-crawler.jar
 
-CMD ["ls"]
+CMD ["sh", "-c", \
+    "exec java -cp wallstreetbets-crawler.jar clojure.main --report stderr -m wallstreetbets-crawler"]
