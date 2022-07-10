@@ -25,12 +25,35 @@
 (def iso-instant-ms-formatter
   (-> (DateTimeFormatterBuilder.) (.appendInstant 3) .toFormatter))
 
+(defn seconds->instant
+  [seconds]
+  (some->> seconds
+           (* 1000)
+           (java-time/instant)))
+
+(defn instant->timestamp
+  [instant]
+  (some->> instant
+           (java-time/format iso-instant-ms-formatter)))
+
 (defn now []
   (->> (java-time/instant)
-       (java-time/format iso-instant-ms-formatter)))
+       (instant->timestamp)))
+
+(defn seconds->timestamp
+  [seconds]
+  (->> seconds
+       seconds->instant
+       instant->timestamp))
 
 (comment
 
+  (java-time/instant (* 1000 1657401968.0))
+  (seconds->instant 1657401968.0)
+  (seconds->instant nil)
+  (instant->timestamp nil)
+
+  (seconds->timestamp 1657401968.0)
   (update-in-if-exists {:a {:b "x"}} [:a :b] keyword)
   (update-in-if-exists {:a {:c "x"}} [:a :b] keyword)
   (update-in-if-exists {:a "x"} [:a :b] keyword)
