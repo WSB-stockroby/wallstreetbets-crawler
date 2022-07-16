@@ -10,9 +10,10 @@ dev:
   docker compose down
   docker compose up -d
 
-# NOTE: this does not work, because the crawler won't be on the same network as Kafka
-# run: dev
-#   docker run -i --rm wallstreetbets-crawler:latest
+# TODO: the requests will time out for some reason, fix it (maybe AOT?, monitor the the container to find the root cause)
+# NOTE: this only works if there is a wallstreetbets-crawler-network network defined in the compose file
+run: dev
+  docker run -i --rm --net wallstreetbets-crawler-network wallstreetbets-crawler:latest
 
 
 produce TOPIC:

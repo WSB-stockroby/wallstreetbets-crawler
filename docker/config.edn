@@ -1,5 +1,5 @@
 {:kafka {"client.id"           "wallstreetbets-crawler"
-         "bootstrap.servers"   "localhost:9092"
+         "bootstrap.servers"   "kafka1:9092"
          "compression.type"    "gzip"
          ;; "security.protocol"   "SSL"
          "key.serializer"      "org.apache.kafka.common.serialization.StringSerializer"
@@ -10,6 +10,6 @@
          "acks"                "1"
          "retries"             "1"
          "linger.ms"           "10"
-         "request.timeout.ms"  "250"
-         "delivery.timeout.ms" "1000"
+         "request.timeout.ms"  "500"
+         "delivery.timeout.ms" "2000"
          "enable.idempotence"  "false"}}
