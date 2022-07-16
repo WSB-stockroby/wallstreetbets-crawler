@@ -1,4 +1,5 @@
 {:kafka {"client.id"           "wallstreetbets-crawler"
+         ;; NOTE: this only works if you start the crawler locally, and have kafka set up in a container
          "bootstrap.servers"   "localhost:9092"
          "compression.type"    "gzip"
          ;; "security.protocol"   "SSL"

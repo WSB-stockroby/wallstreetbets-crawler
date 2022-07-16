@@ -38,3 +38,10 @@ services:
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
 
       # TODO: add volumes for persistent storage, but: https://github.com/docker/compose/issues/3270 
+
+  # TODO: figure out whether we should add the crawler here (it will need access to the network somehow)
+  # crawler:
+  #   image: wallstreetbets-crawler:0.2.1
+  #   hostname: crawler
+  #   container_name: crawler
+  #   depends_on: kafka1

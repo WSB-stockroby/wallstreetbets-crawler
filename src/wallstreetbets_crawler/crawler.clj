@@ -116,11 +116,12 @@
       comments)))
 
 (defn get-all-comments!
-  []
-  (let [articles (get-simplified-articles! 100)]
-    (for [{:keys [id]} articles
-          comment (:t1 (get-simplified-comments! id 10000))]
-      comment)))
+  ([]
+   (get-all-comments! (get-simplified-articles! 100)))
+  ([articles]
+   (for [{:keys [id]} articles
+         comment (:t1 (get-simplified-comments! id 10000))]
+     comment)))
 
 (comment
 
