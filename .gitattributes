@@ -1,1 +1,2 @@
 secret.edn filter=git-crypt diff=git-crypt
+gcr_key_file.json filter=git-crypt diff=git-crypt
